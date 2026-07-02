@@ -1,0 +1,379 @@
+<UserControl x:Class="ISGPrinter.App.Views.Pages.DiagnosticsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RenderTransform>
+            <TranslateTransform />
+        </Grid.RenderTransform>
+        <Grid.Triggers>
+            <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                <BeginStoryboard Storyboard="{StaticResource PageIntroStoryboard}" />
+            </EventTrigger>
+        </Grid.Triggers>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Page header -->
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Diagnostics" Style="{StaticResource PageTitleText}" />
+                <TextBlock Text="Layered checks: spooler, install, network reachability and recent errors."
+                           Style="{StaticResource CaptionText}"
+                           Margin="0,3,0,0" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                <ComboBox Width="220"
+                          VerticalAlignment="Center"
+                          ItemsSource="{Binding Printers}"
+                          SelectedItem="{Binding SelectedPrinter}"
+                          ToolTip="Choose which installed printer to diagnose">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Style="{StaticResource PrimaryButton}"
+                        Command="{Binding RunDiagnosticsCommand}"
+                        Margin="8,0,0,0"
+                        ToolTip="Run all diagnostic checks for the selected printer">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource IconFont}" FontSize="13" VerticalAlignment="Center" />
+                        <TextBlock Text="Run Diagnostics" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Verdict banner -->
+        <Border Grid.Row="1"
+                CornerRadius="10"
+                Padding="14,11"
+                Margin="0,0,0,14"
+                Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="{StaticResource NeutralTint}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding OverallStatus}" Value="Ok">
+                            <Setter Property="Background" Value="{StaticResource GoodTint}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding OverallStatus}" Value="Warning">
+                            <Setter Property="Background" Value="{StaticResource WarningTint}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding OverallStatus}" Value="Error">
+                            <Setter Property="Background" Value="{StaticResource CriticalTint}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock FontFamily="{StaticResource IconFont}"
+                           FontSize="17"
+                           VerticalAlignment="Center"
+                           Margin="0,0,11,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="&#xE946;" />
+                            <Setter Property="Foreground" Value="{StaticResource TextCaption}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding OverallStatus}" Value="Ok">
+                                    <Setter Property="Text" Value="&#xE73E;" />
+                                    <Setter Property="Foreground" Value="{StaticResource Good}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding OverallStatus}" Value="Warning">
+                                    <Setter Property="Text" Value="&#xE7BA;" />
+                                    <Setter Property="Foreground" Value="{StaticResource Warning}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding OverallStatus}" Value="Error">
+                                    <Setter Property="Text" Value="&#xEA39;" />
+                                    <Setter Property="Foreground" Value="{StaticResource Critical}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock VerticalAlignment="Center"
+                           FontSize="13.5"
+                           FontWeight="SemiBold"
+                           Text="{Binding OverallText}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{StaticResource TextBody}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding OverallStatus}" Value="Ok">
+                                    <Setter Property="Foreground" Value="{StaticResource Good}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding OverallStatus}" Value="Warning">
+                                    <Setter Property="Foreground" Value="{StaticResource Warning}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding OverallStatus}" Value="Error">
+                                    <Setter Property="Foreground" Value="{StaticResource Critical}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <!-- Loading -->
+        <ProgressBar Grid.Row="2"
+                     Height="3"
+                     Margin="0,0,0,12"
+                     IsIndeterminate="True"
+                     Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}" />
+
+        <!-- Content -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="*" MinWidth="260" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Checks -->
+            <Border Grid.Column="0" Style="{StaticResource Card}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Padding="16,13"
+                            BorderBrush="{StaticResource BorderLight}"
+                            BorderThickness="0,0,0,1">
+                        <StackPanel>
+                            <TextBlock Text="Diagnostic Checks" Style="{StaticResource SectionTitleText}" />
+                            <TextBlock Text="Each check reports a status, a message and technical details."
+                                       Style="{StaticResource CaptionText}"
+                                       Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <DataGrid Grid.Row="1"
+                              Margin="4,2,4,6"
+                              ItemsSource="{Binding Checks}"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Status" Width="100">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border>
+                                            <Border.Style>
+                                                <Style TargetType="Border" BasedOn="{StaticResource StatusPill}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Ok">
+                                                            <Setter Property="Background" Value="{StaticResource GoodTint}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Warning">
+                                                            <Setter Property="Background" Value="{StaticResource WarningTint}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Error">
+                                                            <Setter Property="Background" Value="{StaticResource CriticalTint}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding Status}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource StatusPillText}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Ok">
+                                                                <Setter Property="Foreground" Value="{StaticResource Good}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Warning">
+                                                                <Setter Property="Foreground" Value="{StaticResource Warning}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Error">
+                                                                <Setter Property="Foreground" Value="{StaticResource Critical}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Check" Binding="{Binding Name}" ElementStyle="{StaticResource GridText}" Width="150" />
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" ElementStyle="{StaticResource GridText}" Width="*" MinWidth="160" />
+                            <DataGridTextColumn Header="Technical Details" Binding="{Binding TechnicalDetails}" ElementStyle="{StaticResource GridText}" Width="*" MinWidth="150" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Empty state -->
+                    <StackPanel Grid.Row="1"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                MaxWidth="320">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Checks.Count}" Value="0" />
+                                            <Condition Binding="{Binding IsLoading}" Value="False" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <TextBlock Style="{StaticResource EmptyStateGlyph}" Text="&#xE9D9;" />
+                        <TextBlock Style="{StaticResource EmptyStateTitle}" Text="No diagnostics yet" />
+                        <TextBlock Style="{StaticResource EmptyStateText}"
+                                   Text="Pick a printer and run diagnostics to check spooler, install, network reachability and recent errors." />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Recommended steps -->
+            <Border Grid.Column="2" Style="{StaticResource Card}">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                        <TextBlock Text="Recommended Technician Steps" Style="{StaticResource SectionTitleText}" />
+                        <TextBlock Text="Suggested actions based on the last diagnostic run."
+                                   Style="{StaticResource CaptionText}"
+                                   Margin="0,2,0,0" />
+                    </StackPanel>
+
+                    <!-- Quick fixes -->
+                    <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasResult}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Border Height="1" Background="{StaticResource BorderLight}" Margin="0,0,0,12" />
+                        <TextBlock Text="QUICK FIXES"
+                                   Foreground="{StaticResource TextCaption}"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,8" />
+                        <Button Style="{StaticResource WarningButton}"
+                                Command="{Binding RestartSpoolerCommand}"
+                                HorizontalAlignment="Stretch"
+                                Margin="0,0,0,8"
+                                ToolTip="Stop and start the Windows Print Spooler (needs administrator)">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE777;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center" />
+                                <TextBlock Text="Restart Spooler" Margin="7,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SlateButton}"
+                                Command="{Binding ClearQueueCommand}"
+                                HorizontalAlignment="Stretch"
+                                Margin="0,0,0,8"
+                                ToolTip="Cancel and remove all jobs in this printer's queue">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE74D;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center" />
+                                <TextBlock Text="Clear Queue" Margin="7,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Command="{Binding SetDefaultCommand}"
+                                HorizontalAlignment="Stretch"
+                                ToolTip="Set the diagnosed printer as default for this account">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource InfoButton}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedPrinter.IsDefault}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE735;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center" />
+                                <TextBlock Text="Set as Default" Margin="7,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <Grid>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding RecommendedSteps}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Ellipse Width="7"
+                                                     Height="7"
+                                                     Fill="{StaticResource Accent}"
+                                                     VerticalAlignment="Top"
+                                                     Margin="1,5,9,0" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding}"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{StaticResource TextBody}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    MaxWidth="220">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RecommendedSteps.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock Style="{StaticResource EmptyStateGlyph}" Text="&#xE8FD;" />
+                            <TextBlock Style="{StaticResource EmptyStateTitle}" Text="No steps yet" />
+                            <TextBlock Style="{StaticResource EmptyStateText}"
+                                       Text="Recommended steps appear here after a diagnostic run." />
+                        </StackPanel>
+                    </Grid>
+                </DockPanel>
+            </Border>
+        </Grid>
+
+        <!-- Status -->
+        <StackPanel Grid.Row="4"
+                    Orientation="Horizontal"
+                    Margin="2,10,0,0">
+            <TextBlock Text="&#xE946;"
+                       FontFamily="{StaticResource IconFont}"
+                       FontSize="12"
+                       Foreground="{StaticResource TextCaption}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,6,0" />
+            <TextBlock Text="{Binding StatusText}"
+                       Style="{StaticResource CaptionText}"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+    </Grid>
+</UserControl>

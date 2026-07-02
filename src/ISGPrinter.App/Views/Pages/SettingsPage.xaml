@@ -1,0 +1,258 @@
+<UserControl x:Class="ISGPrinter.App.Views.Pages.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:helpers="clr-namespace:ISGPrinter.App.Helpers">
+    <Grid>
+        <Grid.RenderTransform>
+            <TranslateTransform />
+        </Grid.RenderTransform>
+        <Grid.Triggers>
+            <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                <BeginStoryboard Storyboard="{StaticResource PageIntroStoryboard}" />
+            </EventTrigger>
+        </Grid.Triggers>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Page header -->
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Settings" Style="{StaticResource PageTitleText}" />
+                <TextBlock Text="{Binding SettingsPath}"
+                           Style="{StaticResource CaptionText}"
+                           Margin="0,3,0,0"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding SettingsPath}" />
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Style="{StaticResource PrimaryButton}"
+                    Command="{Binding SaveCommand}"
+                    VerticalAlignment="Bottom"
+                    ToolTip="Save settings and SNMP credentials">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE74E;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center" />
+                    <TextBlock Text="Save" Margin="7,0,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="340" />
+                </Grid.ColumnDefinitions>
+
+                <!-- SNMP card -->
+                <Border Grid.Column="0" Style="{StaticResource Card}" VerticalAlignment="Top">
+                    <StackPanel>
+                        <TextBlock Text="SNMP" Style="{StaticResource SectionTitleText}" />
+                        <TextBlock Text="Credentials used to read toner, page counts and device status from network printers."
+                                   Style="{StaticResource CaptionText}"
+                                   Margin="0,2,0,14"
+                                   TextWrapping="Wrap" />
+
+                        <CheckBox Content="Enable SNMP queries"
+                                  IsChecked="{Binding EnableSnmp}"
+                                  Margin="0,0,0,14" />
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="160" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="PROFILE NAME" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding ProfileName, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="VERSION" Style="{StaticResource FieldLabel}" />
+                                <ComboBox ItemsSource="{Binding SnmpVersions}" SelectedItem="{Binding SnmpVersion}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- v2c -->
+                        <StackPanel Visibility="{Binding IsV2c, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="COMMUNITY STRING" Style="{StaticResource FieldLabel}" />
+                            <PasswordBox helpers:PasswordBoxHelper.BoundPassword="{Binding Community, Mode=TwoWay}"
+                                         ToolTip="SNMP v2c community for this session" />
+                        </StackPanel>
+
+                        <!-- v3 -->
+                        <StackPanel Visibility="{Binding IsV3, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="USERNAME" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,12" />
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="AUTH PROTOCOL" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox ItemsSource="{Binding AuthProtocols}" SelectedItem="{Binding AuthProtocol}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="AUTH PASSWORD" Style="{StaticResource FieldLabel}" />
+                                    <PasswordBox helpers:PasswordBoxHelper.BoundPassword="{Binding AuthPassword, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="PRIVACY PROTOCOL" Style="{StaticResource FieldLabel}" />
+                                    <ComboBox ItemsSource="{Binding PrivacyProtocols}" SelectedItem="{Binding PrivacyProtocol}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="PRIVACY PASSWORD" Style="{StaticResource FieldLabel}" />
+                                    <PasswordBox helpers:PasswordBoxHelper.BoundPassword="{Binding PrivacyPassword, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+
+                        <Separator Margin="0,14,0,12" />
+
+                        <TextBlock Text="SNMP TIMEOUT (MS)" Style="{StaticResource FieldLabel}" />
+                        <TextBox Text="{Binding SnmpTimeoutMs}" Width="120" HorizontalAlignment="Left" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Right column -->
+                <StackPanel Grid.Column="2">
+                    <!-- Known servers -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                        <StackPanel>
+                            <TextBlock Text="Known Print Servers" Style="{StaticResource SectionTitleText}" />
+                            <TextBlock Text="Servers queried during printer discovery."
+                                       Style="{StaticResource CaptionText}"
+                                       Margin="0,2,0,12"
+                                       TextWrapping="Wrap" />
+
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Text="{Binding NewServerName, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="Print server name" />
+                                <Button Grid.Column="1"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Command="{Binding AddServerCommand}"
+                                        Margin="8,0,0,0"
+                                        MinWidth="80"
+                                        Content="Add" />
+                            </Grid>
+
+                            <ItemsControl ItemsSource="{Binding KnownPrintServers}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource Hover}"
+                                                BorderBrush="{StaticResource BorderLight}"
+                                                BorderThickness="1"
+                                                CornerRadius="7"
+                                                Padding="10,6"
+                                                Margin="0,0,0,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="&#xE968;"
+                                                           FontFamily="{StaticResource IconFont}"
+                                                           FontSize="13"
+                                                           Foreground="{StaticResource TextCaption}"
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,8,0" />
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding}"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{StaticResource TextBody}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <Button Grid.Column="2"
+                                                        Style="{StaticResource GhostButton}"
+                                                        Height="26"
+                                                        Padding="6,0"
+                                                        Command="{Binding DataContext.RemoveServerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Remove this server">
+                                                    <TextBlock Text="&#xE711;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="{StaticResource Critical}" />
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <Border Background="{StaticResource NeutralTint}"
+                                    CornerRadius="7"
+                                    Padding="11,9">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding KnownPrintServers.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="No servers yet. Add one above, or use Auto-detect on the Printers page."
+                                           Style="{StaticResource CaptionText}"
+                                           TextWrapping="Wrap" />
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Discovery & network -->
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="Discovery &amp; Network" Style="{StaticResource SectionTitleText}" />
+                            <TextBlock Text="How ISG Printer finds and reaches printers."
+                                       Style="{StaticResource CaptionText}"
+                                       Margin="0,2,0,12"
+                                       TextWrapping="Wrap" />
+                            <CheckBox Content="Auto-detect from Active Directory"
+                                      IsChecked="{Binding EnableActiveDirectoryDiscovery}"
+                                      Margin="0,0,0,14" />
+                            <TextBlock Text="NETWORK TIMEOUT (MS)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding NetworkTimeoutMs}" Width="120" HorizontalAlignment="Left" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Status -->
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    Margin="2,10,0,0">
+            <TextBlock Text="&#xE946;"
+                       FontFamily="{StaticResource IconFont}"
+                       FontSize="12"
+                       Foreground="{StaticResource TextCaption}"
+                       VerticalAlignment="Center"
+                       Margin="0,0,6,0" />
+            <TextBlock Text="{Binding StatusText}"
+                       Style="{StaticResource CaptionText}"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+    </Grid>
+</UserControl>

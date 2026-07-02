@@ -1,0 +1,405 @@
+<Window x:Class="ISGPrinter.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:ISGPrinter.App.Views.Controls"
+        xmlns:pages="clr-namespace:ISGPrinter.App.Views.Pages"
+        xmlns:vm="clr-namespace:ISGPrinter.App.ViewModels"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        mc:Ignorable="d"
+        Title="ISG Printer"
+        MinHeight="720"
+        MinWidth="1100"
+        Height="800"
+        Width="1240"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Assets/Brand/isg-printer-logo.png"
+        Background="Transparent"
+        Foreground="{StaticResource TextBody}"
+        FontFamily="Segoe UI Variable Text, Segoe UI"
+        FontSize="13"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="48"
+                      GlassFrameThickness="-1"
+                      ResizeBorderThickness="6"
+                      CornerRadius="0"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:PrintersViewModel}">
+            <pages:PrintersPage />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:LocalPrintersViewModel}">
+            <pages:LocalPrintersPage />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DiagnosticsViewModel}">
+            <pages:DiagnosticsPage />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ReportsViewModel}">
+            <pages:ReportsPage />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <pages:SettingsPage />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AboutViewModel}">
+            <pages:AboutPage />
+        </DataTemplate>
+
+        <!-- Sidebar navigation item: a distinct raised chip that lights
+             up in its own module color when active. The glow surrounds
+             all four sides (DropShadowEffect, ShadowDepth=0). -->
+        <Style x:Key="NavItemButton" TargetType="Button">
+            <Setter Property="Height" Value="40" />
+            <Setter Property="Margin" Value="0,4" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid Margin="3,3">
+                            <!-- The raised key: base fill + elevation shadow + press transform -->
+                            <Border x:Name="bd"
+                                    Background="{StaticResource NavGlassFill}"
+                                    BorderBrush="{StaticResource NavGlassBorder}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    SnapsToDevicePixels="True"
+                                    Effect="{StaticResource NavGlassShadow}"
+                                    RenderTransformOrigin="0.5,0.5">
+                                <Border.RenderTransform>
+                                    <TranslateTransform />
+                                </Border.RenderTransform>
+                                <Grid>
+                                    <!-- 3D texture: sheen (subtle on glass, full on active) + top bevel -->
+                                    <Border x:Name="sheen"
+                                            CornerRadius="9"
+                                            Background="{StaticResource ButtonSheen}"
+                                            Opacity="0.4"
+                                            IsHitTestVisible="False" />
+                                    <Border CornerRadius="9"
+                                            BorderThickness="0,1,0,0"
+                                            BorderBrush="{StaticResource ButtonBevel}"
+                                            IsHitTestVisible="False" />
+                                    <StackPanel Orientation="Horizontal"
+                                                Margin="14,0,10,0"
+                                                VerticalAlignment="Center">
+                                        <TextBlock x:Name="icon"
+                                                   Text="{Binding Icon}"
+                                                   FontFamily="{StaticResource IconFont}"
+                                                   FontSize="15"
+                                                   Width="22"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{StaticResource NavIconIdle}" />
+                                        <TextBlock x:Name="title"
+                                                   Text="{Binding Title}"
+                                                   FontSize="13"
+                                                   Margin="8,0,0,0"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{StaticResource NavItemText}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource NavGlassFillHover}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Effect" Value="{StaticResource NavShadowPressed}" />
+                                <Setter TargetName="bd" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="1.5" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{Binding Accent}" />
+                                <Setter TargetName="bd" Property="BorderBrush" Value="{Binding Accent}" />
+                                <Setter TargetName="bd" Property="Effect" Value="{StaticResource NavShadowRest}" />
+                                <Setter TargetName="sheen" Property="Opacity" Value="1" />
+                                <Setter TargetName="icon" Property="Foreground" Value="White" />
+                                <Setter TargetName="title" Property="Foreground" Value="White" />
+                                <Setter TargetName="title" Property="FontWeight" Value="SemiBold" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="34" />
+        </Grid.RowDefinitions>
+
+        <!-- ===== Custom title bar (drag area) ===== -->
+        <Border Grid.Row="0"
+                Background="{StaticResource TitleBarBackdrop}"
+                BorderBrush="{StaticResource BorderLight}"
+                BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center">
+                    <controls:BrandLogo Width="28" Height="28" />
+                    <TextBlock Text="ISG Printer"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextStrong}"
+                               VerticalAlignment="Center"
+                               Margin="10,0,0,0" />
+                    <TextBlock Text="Technician Console"
+                               FontSize="12"
+                               Foreground="{StaticResource TextCaption}"
+                               VerticalAlignment="Center"
+                               Margin="8,1,0,0" />
+                </StackPanel>
+
+                <TextBox x:Name="SearchBox"
+                         Grid.Column="1"
+                         Style="{StaticResource SearchTextBox}"
+                         Width="300"
+                         Height="32"
+                         VerticalAlignment="Center"
+                         Margin="18,0,0,0"
+                         WindowChrome.IsHitTestVisibleInChrome="True"
+                         Tag="Search printers, servers, drivers…  (Ctrl+F)"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Filters the Printers and Local Printers tables" />
+
+                <StackPanel Grid.Column="3"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,8,0"
+                            WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Border Style="{StaticResource HeaderPill}" ToolTip="Computer name">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource HeaderPillIcon}" Text="&#xE977;" />
+                            <TextBlock Style="{StaticResource HeaderPillText}" Text="{Binding ComputerName}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource HeaderPill}" ToolTip="Running Windows account">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource HeaderPillIcon}" Text="&#xE77B;" />
+                            <TextBlock Style="{StaticResource HeaderPillText}" Text="{Binding RunningUser}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource HeaderPill}" ToolTip="Domain / workgroup">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource HeaderPillIcon}" Text="&#xE774;" />
+                            <TextBlock Style="{StaticResource HeaderPillText}" Text="{Binding DomainName}" />
+                        </StackPanel>
+                    </Border>
+                    <Border ToolTip="Elevation state of this process">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource HeaderPill}">
+                                <Setter Property="Background" Value="{StaticResource CriticalTint}" />
+                                <Setter Property="BorderBrush" Value="Transparent" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsElevated}" Value="True">
+                                        <Setter Property="Background" Value="{StaticResource GoodTint}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE7EF;">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource HeaderPillIcon}">
+                                        <Setter Property="Foreground" Value="{StaticResource Critical}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsElevated}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource Good}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource HeaderPillText}">
+                                        <Setter Property="Text" Value="Not elevated" />
+                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                        <Setter Property="Foreground" Value="{StaticResource Critical}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsElevated}" Value="True">
+                                                <Setter Property="Text" Value="Administrator" />
+                                                <Setter Property="Foreground" Value="{StaticResource Good}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Window buttons -->
+                <StackPanel Grid.Column="4"
+                            Orientation="Horizontal"
+                            WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button Style="{StaticResource CaptionButton}"
+                            Click="OnMinimizeClick"
+                            ToolTip="Minimize">
+                        <TextBlock Text="&#xE921;" FontFamily="{StaticResource IconFont}" FontSize="10" />
+                    </Button>
+                    <Button Style="{StaticResource CaptionButton}"
+                            Click="OnMaximizeRestoreClick"
+                            ToolTip="Maximize / Restore">
+                        <TextBlock FontFamily="{StaticResource IconFont}" FontSize="10">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="&#xE922;" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
+                                            <Setter Property="Text" Value="&#xE923;" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Button>
+                    <Button Style="{StaticResource CaptionCloseButton}"
+                            Click="OnCloseClick"
+                            ToolTip="Close">
+                        <TextBlock Text="&#xE8BB;" FontFamily="{StaticResource IconFont}" FontSize="10" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ===== Body ===== -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Sidebar -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource SidebarBackdrop}"
+                    BorderBrush="{StaticResource BorderLight}"
+                    BorderThickness="0,0,1,0">
+                <DockPanel LastChildFill="True">
+                    <StackPanel DockPanel.Dock="Bottom" Margin="12,8,12,14">
+                        <Border Height="1"
+                                Background="{StaticResource BorderLight}"
+                                Margin="4,0,4,12" />
+                        <Button Command="{Binding RefreshAllCommand}"
+                                HorizontalAlignment="Stretch"
+                                ToolTip="Reload printers, local printers and diagnostics">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE72C;"
+                                           FontFamily="{StaticResource IconFont}"
+                                           FontSize="13"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="Refresh All"
+                                           Margin="8,0,0,0"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="12,12,12,4">
+                            <TextBlock Text="NAVIGATION"
+                                       FontSize="10.5"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextCaption}"
+                                       Margin="14,4,0,8" />
+                            <ItemsControl ItemsSource="{Binding NavigationItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource NavItemButton}"
+                                                Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- Page host -->
+            <ContentControl Grid.Column="1"
+                            Content="{Binding CurrentPage}"
+                            Margin="20,16,20,12" />
+        </Grid>
+
+        <!-- ===== Status bar ===== -->
+        <Border Grid.Row="2"
+                Background="{StaticResource StatusBarBackdrop}"
+                BorderBrush="{StaticResource BorderLight}"
+                BorderThickness="0,1,0,0">
+            <DockPanel Margin="20,0" LastChildFill="False">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <TextBlock Style="{StaticResource CaptionText}"
+                               VerticalAlignment="Center"
+                               Text="{Binding DefaultPrinter}" />
+                    <TextBlock Style="{StaticResource CaptionText}"
+                               VerticalAlignment="Center"
+                               Text="•"
+                               Margin="10,0" />
+                    <TextBlock Style="{StaticResource CaptionText}"
+                               VerticalAlignment="Center"
+                               Text="{Binding KnownServers}" />
+                    <TextBlock Style="{StaticResource CaptionText}"
+                               VerticalAlignment="Center"
+                               Text="•"
+                               Margin="10,0" />
+                    <TextBlock Style="{StaticResource CaptionText}"
+                               VerticalAlignment="Center"
+                               Text="{Binding LastRefresh}" />
+                    <TextBlock Style="{StaticResource CaptionText}"
+                               VerticalAlignment="Center"
+                               Text="•"
+                               Margin="10,0" />
+                    <TextBlock Style="{StaticResource CaptionText}"
+                               VerticalAlignment="Center"
+                               Text="{Binding ActiveSnmpProfile}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                    <TextBlock FontFamily="{StaticResource IconFont}"
+                               FontSize="12"
+                               Text="&#xE7BA;"
+                               Foreground="{StaticResource Warning}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,6,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding WarningText}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock FontSize="12"
+                               Foreground="{StaticResource Warning}"
+                               FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Text="{Binding WarningText}" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

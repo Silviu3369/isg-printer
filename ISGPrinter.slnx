@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ISGPrinter.App/ISGPrinter.App.csproj" />
+    <Project Path="src/ISGPrinter.Application/ISGPrinter.Application.csproj" />
+    <Project Path="src/ISGPrinter.Domain/ISGPrinter.Domain.csproj" />
+    <Project Path="src/ISGPrinter.Infrastructure/ISGPrinter.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ISGPrinter.Tests/ISGPrinter.Tests.csproj" />
+  </Folder>
+</Solution>
